@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AOP.Wpf", "src\AOP.Wpf\AOP.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AOP.WeaverTask", "src\AOP.WeaverTask\AOP.WeaverTask.csproj", "{0C6CB2A8-51E6-469F-9B77-43FC5902C176}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{3A23EEB8-52B8-4C53-8BFF-316926C04C98}"
+EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = AOP.vsmdi
@@ -43,5 +45,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0C6CB2A8-51E6-469F-9B77-43FC5902C176} = {3A23EEB8-52B8-4C53-8BFF-316926C04C98}
 	EndGlobalSection
 EndGlobal

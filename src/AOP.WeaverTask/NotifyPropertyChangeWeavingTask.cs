@@ -33,7 +33,7 @@ namespace AOP.WeaverTask
             Modify("c:\\dev\\aop\\src\\aop.lib\\bin\\debug\\aop.lib.dll");
         }
 
-        private void Modify(string assemblyFile)
+        private static void Modify(string assemblyFile)
         {
             using (var stream = new MemoryStream(File.ReadAllBytes(assemblyFile)))
             {
@@ -69,11 +69,6 @@ namespace AOP.WeaverTask
 
                     var backingField = (FieldReference)backingFieldRef.Operand;
 
-                    // use the types inequality if it exists, otherwise fall back to object.equals
-                    var fieldDef = backingField.FieldType.Resolve();
-                    var inEquality = fieldDef.Methods.FirstOrDefault(m => m.Name.Contains("op_Inequality"));
-                    var equals = inEquality != null ? GetImportedMethod(def, inEquality) : objectEqualsMethod;
-
                     // delete the all instructions and replace it with boilerplate
 
                     while (body.Instructions.Count > 0)
@@ -86,6 +81,11 @@ namespace AOP.WeaverTask
                     proc.Emit(OpCodes.Ldarg_0);
                     proc.Emit(OpCodes.Ldfld, backingField);
                     proc.Emit(OpCodes.Ldarg_1);
+
+                    // use the types inequality if it exists, otherwise fall back to object.equals
+                    var fieldDef = backingField.FieldType.Resolve();
+                    var inEquality = fieldDef.Methods.FirstOrDefault(m => m.Name.Contains("op_Inequality"));
+                    var equals = inEquality != null ? GetImportedMethod(def, inEquality) : objectEqualsMethod;
 
                     if (inEquality != null)
                     {

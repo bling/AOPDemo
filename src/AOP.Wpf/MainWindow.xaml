@@ -3,25 +3,24 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="MainWindow" Height="350" Width="525">
 	<StackPanel>
-        <GroupBox Header="POCO" Margin="10">
-            <StackPanel>
-                <TextBox Text="{Binding StockTicker.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBox Text="{Binding StockTicker.Price, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-                <TextBlock Text="{Binding StockTicker.Name}" />
-                <TextBlock Text="{Binding StockTicker.Price}" />
-            </StackPanel>
-        </GroupBox>
-        
-        <GroupBox Header="Verbose" Margin="10">
+		<GroupBox Header="Verbose" Margin="10">
 			<StackPanel>
-                <TextBox Text="{Binding StockTickerVerbose.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBox Text="{Binding StockTickerVerbose.Price, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+				<TextBox Text="{Binding StockTickerVerbose.Name, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Text="{Binding StockTickerVerbose.Price, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" />
 
-                <TextBlock Text="{Binding StockTickerVerbose.Name}" />
-                <TextBlock Text="{Binding StockTickerVerbose.Price}" />
+				<TextBlock Text="{Binding StockTickerVerbose.Name}" />
+				<TextBlock Text="{Binding StockTickerVerbose.Price}" />
 			</StackPanel>
 		</GroupBox>
 
+		<GroupBox Header="POCO" Margin="10">
+			<StackPanel>
+                <TextBox Text="{Binding StockTicker.Name, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Text="{Binding StockTicker.Price, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" />
+
+				<TextBlock Text="{Binding StockTicker.Name}" />
+				<TextBlock Text="{Binding StockTicker.Price}" />
+			</StackPanel>
+		</GroupBox>
 	</StackPanel>
 </Window>

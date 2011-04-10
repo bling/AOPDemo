@@ -1,7 +1,7 @@
 ﻿<Window x:Class="AOP.Wpf.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="MainWindow" Height="350" Width="525">
+        Title="MainWindow" Height="450" Width="525">
 	<StackPanel>
 		<GroupBox Header="Verbose" Margin="10">
 			<StackPanel>
@@ -13,7 +13,7 @@
 			</StackPanel>
 		</GroupBox>
 
-		<GroupBox Header="POCO" Margin="10">
+		<GroupBox Header="POCO INotifyPropertyChanged" Margin="10">
 			<StackPanel>
                 <TextBox Text="{Binding StockTicker.Name, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" />
                 <TextBox Text="{Binding StockTicker.Price, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" />
@@ -22,5 +22,15 @@
 				<TextBlock Text="{Binding StockTicker.Price}" />
 			</StackPanel>
 		</GroupBox>
-	</StackPanel>
+
+        <GroupBox Header="POCO DependencyObject" Margin="10">
+            <StackPanel>
+                <TextBox Text="{Binding StockTickerDP.Name, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Text="{Binding StockTickerDP.Price, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Text="{Binding StockTickerDP.Name}" />
+                <TextBlock Text="{Binding StockTickerDP.Price}" />
+            </StackPanel>
+        </GroupBox>
+    </StackPanel>
 </Window>

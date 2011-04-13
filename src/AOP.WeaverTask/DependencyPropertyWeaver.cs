@@ -3,19 +3,12 @@ using System.Linq;
 using System.Windows;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using NUnit.Framework;
 
 namespace AOP.WeaverTask
 {
-    public class DependencyPropertyWeavingTask : WeaverBase
+    public class DependencyPropertyWeaver : IWeaver
     {
-        [Test]
-        public void Run()
-        {
-            Modify("c:\\dev\\aop\\src\\aop.lib\\bin\\debug\\aop.lib.dll");
-        }
-
-        protected override bool Modify(AssemblyDefinition def)
+        public bool Scan(AssemblyDefinition def)
         {
             var properties = from module in def.Modules
                              from type in module.Types

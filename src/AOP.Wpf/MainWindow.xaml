@@ -15,21 +15,21 @@
 
 		<GroupBox Header="POCO INotifyPropertyChanged" Margin="10">
 			<StackPanel>
-                <TextBox Text="{Binding StockTicker.Name, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBox Text="{Binding StockTicker.Price, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Text="{Binding StockTickerInpc.Name, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Text="{Binding StockTickerInpc.Price, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" />
 
-				<TextBlock Text="{Binding StockTicker.Name}" />
-				<TextBlock Text="{Binding StockTicker.Price}" />
+                <TextBlock Text="{Binding StockTickerInpc.Name}" />
+                <TextBlock Text="{Binding StockTickerInpc.Price}" />
 			</StackPanel>
 		</GroupBox>
 
         <GroupBox Header="POCO DependencyObject" Margin="10">
             <StackPanel>
-                <TextBox Text="{Binding StockTickerDP.Name, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBox Text="{Binding StockTickerDP.Price, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Text="{Binding StockTickerPoco.Name, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Text="{Binding StockTickerPoco.Price, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" />
 
-                <TextBlock Text="{Binding StockTickerDP.Name}" />
-                <TextBlock Text="{Binding StockTickerDP.Price}" />
+                <TextBlock Text="{Binding StockTickerPoco.Name}" />
+                <TextBlock Text="{Binding StockTickerPoco.Price}" />
             </StackPanel>
         </GroupBox>
     </StackPanel>

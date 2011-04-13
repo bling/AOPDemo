@@ -8,16 +8,16 @@ namespace AOP.Wpf
     /// </summary>
     public partial class MainWindow : Window
     {
-        public StockTicker StockTicker { get; private set; }
-        public StockTickerDP StockTickerDP { get; private set; }
+        public StockTickerInpc StockTickerInpc { get; private set; }
+        public StockTickerPoco StockTickerPoco { get; private set; }
         public StockTickerVerbose StockTickerVerbose { get; private set; }
 
         public MainWindow()
         {
             InitializeComponent();
 
-            StockTicker = new StockTicker();
-            StockTickerDP = new StockTickerDP();
+            StockTickerInpc = new StockTickerInpc();
+            StockTickerPoco = new StockTickerPoco();
             StockTickerVerbose = new StockTickerVerbose();
             DataContext = this;
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Reflection;
 using Mono.Cecil;
 
@@ -42,6 +43,13 @@ namespace AOP.WeaverTask
             var type = Type.GetType(reference.DeclaringType.FullName);
             var method = type.GetMethod(reference.Name);
             return assembly.MainModule.Import(method);
+        }
+
+        public static bool IsAutoPropertySetter(this PropertyDefinition property)
+        {
+            var body = property.GetMethod.Body;
+            var backingFieldRef = body.Instructions.FirstOrDefault(x => x.Operand != null && x.Operand.ToString().Contains("BackingField"));
+            return backingFieldRef != null && body.Instructions.Count <= 4;
         }
     }
 }

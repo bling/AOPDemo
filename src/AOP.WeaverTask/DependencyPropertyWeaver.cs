@@ -21,11 +21,8 @@ namespace AOP.WeaverTask
 
             foreach (var prop in properties)
             {
-                var body = prop.SetMethod.Body;
-
-                var backingFieldRef = body.Instructions.FirstOrDefault(x => x.Operand != null && x.Operand.ToString().Contains("BackingField"));
-                if (backingFieldRef == null || body.Instructions.Count > 4)
-                    continue; // only support auto props
+                if (!prop.IsAutoPropertySetter())
+                    continue;
 
                 var staticCtor = prop.DeclaringType.Methods.SingleOrDefault(m => m.Name == ".cctor");
                 if (staticCtor == null)

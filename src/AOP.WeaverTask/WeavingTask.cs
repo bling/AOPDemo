@@ -15,6 +15,7 @@ namespace AOP.WeaverTask
                 {
                     new DependencyPropertyWeaver(),
                     new NotifyPropertyChangedWeaver(),
+                    new EmbeddedDependencyPropertyWeaver(),
                 };
         }
 

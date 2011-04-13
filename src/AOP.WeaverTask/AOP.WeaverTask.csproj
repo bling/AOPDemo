@@ -47,6 +47,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EmbeddedDependencyPropertyWeaver.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="DependencyPropertyWeaver.cs" />
     <Compile Include="IWeaver.cs" />

@@ -7,16 +7,13 @@ using Mono.Cecil.Cil;
 
 namespace AOP.WeaverTask
 {
-    public class EmbeddedDependencyPropertyWeaver : IWeaver
+    public class EmbeddedDependencyPropertyWeaver : WeaverTask
     {
-        private AssemblyDefinition Assembly { get; set; }
-
-        public bool Scan(AssemblyDefinition def)
+        public override bool Scan(AssemblyDefinition def)
         {
-            Assembly = def.MainModule.Assembly;
-
             var properties = from module in def.Modules
                              from type in module.Types
+                             where string.IsNullOrEmpty(PatternMatch) || type.Name.Contains(PatternMatch)
                              from p in type.Properties
                              where p.IsAutoPropertySetter()
                              select p;
@@ -69,7 +66,7 @@ namespace AOP.WeaverTask
                 "__EMBEDDED_DP",
                 TypeAttributes.Public | TypeAttributes.NestedPublic | TypeAttributes.BeforeFieldInit);
 
-            embeddedType.BaseType = Assembly.ImportType<DependencyObject>();
+            embeddedType.BaseType = CurrentAssembly.ImportType<DependencyObject>();
 
             // generate default/static constructors
 
@@ -79,7 +76,7 @@ namespace AOP.WeaverTask
 
             var proc = ctor.Body.GetILProcessor();
             proc.Emit(OpCodes.Ldarg_0);
-            proc.Emit(OpCodes.Call, Assembly.ImportMethod(typeof(DependencyObject).GetConstructors()[0]));
+            proc.Emit(OpCodes.Call, CurrentAssembly.ImportMethod(typeof(DependencyObject).GetConstructors()[0]));
             proc.Emit(OpCodes.Ret);
             embeddedType.Methods.Add(ctor);
 
@@ -107,9 +104,9 @@ namespace AOP.WeaverTask
 
         private void WeaveDependencyProperty(MethodBody staticCtorBody, FieldReference field, PropertyDefinition property)
         {
-            var propertyType = Assembly.ImportType(Type.GetType(property.PropertyType.FullName));
-            var getTypeFromHandle = Assembly.ImportMethod(typeof(Type).GetMethod("GetTypeFromHandle"));
-            var register = Assembly.ImportMethod(typeof(DependencyProperty).GetMethod("Register", new[] { typeof(string), typeof(Type), typeof(Type) }));
+            var propertyType = CurrentAssembly.ImportType(Type.GetType(property.PropertyType.FullName));
+            var getTypeFromHandle = CurrentAssembly.ImportMethod(typeof(Type).GetMethod("GetTypeFromHandle"));
+            var register = CurrentAssembly.ImportMethod(typeof(DependencyProperty).GetMethod("Register", new[] { typeof(string), typeof(Type), typeof(Type) }));
 
             if (staticCtorBody.Instructions.Last().OpCode != OpCodes.Ret)
                 throw new InvalidOperationException("The last instruction should be OpCode.Ret");
@@ -129,22 +126,16 @@ namespace AOP.WeaverTask
             var body = property.GetMethod.Body;
             var proc = body.GetILProcessor();
             var dpField = type.Fields.Single(f => f.Name == property.Name + "DependencyProperty");
-            var getValue = Assembly.ImportMethod(typeof(DependencyObject).GetMethod("GetValue"));
+            var getValue = CurrentAssembly.ImportMethod(typeof(DependencyObject).GetMethod("GetValue"));
 
-            var ldLoc0 = proc.Create(OpCodes.Ldloc_0);
-            var brs = proc.Create(OpCodes.Br_S, ldLoc0);
-
+            body.Variables.Clear();
             body.Instructions.Clear();
 
-            proc.Emit(OpCodes.Nop);
             proc.Emit(OpCodes.Ldarg_0);
             proc.Emit(OpCodes.Ldfld, embeddedField);
             proc.Emit(OpCodes.Ldsfld, dpField);
             proc.Emit(OpCodes.Callvirt, getValue);
             proc.Emit(property.PropertyType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, property.PropertyType);
-            proc.Emit(OpCodes.Stloc_0);
-            proc.Append(brs);
-            proc.Append(ldLoc0);
             proc.Emit(OpCodes.Ret);
         }
 
@@ -157,7 +148,6 @@ namespace AOP.WeaverTask
 
             body.Instructions.Clear();
 
-            proc.Emit(OpCodes.Nop);
             proc.Emit(OpCodes.Ldarg_0);
             proc.Emit(OpCodes.Ldfld, embeddedField);
             proc.Emit(OpCodes.Ldsfld, dpField);
@@ -167,7 +157,6 @@ namespace AOP.WeaverTask
                 proc.Emit(OpCodes.Box, property.PropertyType);
             }
             proc.Emit(OpCodes.Callvirt, setValue);
-            proc.Emit(OpCodes.Nop);
             proc.Emit(OpCodes.Ret);
         }
 
@@ -178,7 +167,7 @@ namespace AOP.WeaverTask
             {
                 field = new FieldDefinition(propertyName + "DependencyProperty",
                                             FieldAttributes.Static | FieldAttributes.Public | FieldAttributes.InitOnly,
-                                            Assembly.ImportType<DependencyProperty>());
+                                            CurrentAssembly.ImportType<DependencyProperty>());
                 type.Fields.Add(field);
             }
 

@@ -6,9 +6,9 @@ using Mono.Cecil.Cil;
 
 namespace AOP.WeaverTask
 {
-    public class DependencyPropertyWeaver : IWeaver
+    public class DependencyPropertyWeaver : WeaverTask
     {
-        public bool Scan(AssemblyDefinition def)
+        public override bool Scan(AssemblyDefinition def)
         {
             var properties = from module in def.Modules
                              from type in module.Types

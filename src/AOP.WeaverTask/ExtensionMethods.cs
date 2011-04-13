@@ -47,7 +47,7 @@ namespace AOP.WeaverTask
 
         public static bool IsAutoPropertySetter(this PropertyDefinition property)
         {
-            var body = property.GetMethod.Body;
+            var body = property.SetMethod.Body;
             var backingFieldRef = body.Instructions.FirstOrDefault(x => x.Operand != null && x.Operand.ToString().Contains("BackingField"));
             return backingFieldRef != null && body.Instructions.Count <= 4;
         }

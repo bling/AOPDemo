@@ -5,9 +5,9 @@ using Mono.Cecil.Cil;
 
 namespace AOP.WeaverTask
 {
-    public class NotifyPropertyChangedWeaver : IWeaver
+    public class NotifyPropertyChangedWeaver : WeaverTask
     {
-        public bool Scan(AssemblyDefinition def)
+        public override bool Scan(AssemblyDefinition def)
         {
             var propertyChangedEventArgsCtor = def.ImportPropertyChangedEventArgsCtor();
             var propertyChangedEventHandler = def.ImportType<PropertyChangedEventHandler>();

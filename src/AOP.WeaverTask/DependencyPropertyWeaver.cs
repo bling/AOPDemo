@@ -1,27 +1,72 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Windows;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using FieldAttributes = Mono.Cecil.FieldAttributes;
+using MethodAttributes = Mono.Cecil.MethodAttributes;
+using MethodBody = Mono.Cecil.Cil.MethodBody;
 
 namespace AOP.WeaverTask
 {
-    public class DependencyPropertyWeaver : WeaverTask
+    public class DependencyPropertyWeaver : AssemblyWeaverBase
     {
-        public override bool Scan(AssemblyDefinition def)
+        public DependencyPropertyWeaver(Assembly assembly, AssemblyDefinition definition)
+            : base(assembly, definition)
         {
-            var properties = from module in def.Modules
+        }
+
+        public override void Weave()
+        {
+            var properties = from module in Definition.Modules
                              from type in module.Types
-                             where type.BaseType != null
-                             where type.BaseType.Name == "DependencyObject"
+                             where type.Name == "StockTickerPoco"
                              from p in type.Properties
-                             where p.GetMethod != null
-                             where p.SetMethod != null
                              select p;
 
+            var types = properties.GroupBy(p => p.DeclaringType);
+            Modify(types);
+        }
+
+        private void Modify(IEnumerable<IGrouping<TypeDefinition, PropertyDefinition>> types)
+        {
+            foreach (var t in types)
+            {
+                WeaveDependencyObjectBaseClass(t.Key);
+                WeaveProperties(t);
+            }
+        }
+
+        private void WeaveDependencyObjectBaseClass(TypeDefinition type)
+        {
+            while (type.BaseType.FullName != "System.Object")
+            {
+                type = type.BaseType.Resolve();
+                if (type.FullName == "System.Windows.DependencyObject")
+                    return;
+            }
+
+            type.BaseType = Definition.ImportType<DependencyObject>();
+
+            // replace base ctor call to dependency object
+            var ctor = type.Methods.Single(m => m.Name == ".ctor");
+            var instruction = ctor.Body.Instructions
+                .Where(i => i.OpCode == OpCodes.Call)
+                .Single(x => x.Operand.ToString() == "System.Void System.Object::.ctor()");
+
+            instruction.Operand = Definition.ImportMethod(typeof(DependencyObject).GetConstructors()[0]);
+        }
+
+        private void WeaveProperties(IEnumerable<PropertyDefinition> properties)
+        {
             foreach (var prop in properties)
             {
                 if (!prop.IsAutoPropertySetter())
+                    continue;
+
+                if (!prop.IsAutoPropertyGetter())
                     continue;
 
                 var staticCtor = prop.DeclaringType.Methods.SingleOrDefault(m => m.Name == ".cctor");
@@ -29,7 +74,7 @@ namespace AOP.WeaverTask
                 {
                     staticCtor = new MethodDefinition(".cctor",
                                                       MethodAttributes.Private | MethodAttributes.Static | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName,
-                                                      def.ImportType(Type.GetType("System.Void")));
+                                                      Definition.ImportType(Type.GetType("System.Void")));
                     prop.DeclaringType.Methods.Add(staticCtor);
                     staticCtor.Body.GetILProcessor().Emit(OpCodes.Ret);
                 }
@@ -43,11 +88,9 @@ namespace AOP.WeaverTask
                 WeaveGetter(prop);
                 WeaveSetter(prop);
             }
-
-            return true;
         }
 
-        private static void WeaveDependencyProperty(MethodBody staticCtorBody, FieldReference field, PropertyDefinition property)
+        private void WeaveDependencyProperty(MethodBody staticCtorBody, FieldReference field, PropertyDefinition property)
         {
             var assembly = property.DeclaringType.Module.Assembly;
             var propertyType = assembly.ImportType(Type.GetType(property.PropertyType.FullName));
@@ -60,52 +103,47 @@ namespace AOP.WeaverTask
                 return;
             }
 
-            if (staticCtorBody.Instructions.Last().OpCode != OpCodes.Ret)
+            var ret = staticCtorBody.Instructions.Last();
+            if (ret.OpCode != OpCodes.Ret)
                 throw new InvalidOperationException("The last instruction should be OpCode.Ret");
 
+            HasChanges = true;
+
             var proc = staticCtorBody.GetILProcessor();
-            proc.InsertBefore(staticCtorBody.Instructions.Last(), proc.Create(OpCodes.Ldstr, property.Name));
-            proc.InsertBefore(staticCtorBody.Instructions.Last(), proc.Create(OpCodes.Ldtoken, propertyType));
-            proc.InsertBefore(staticCtorBody.Instructions.Last(), proc.Create(OpCodes.Call, getTypeFromHandle));
-            proc.InsertBefore(staticCtorBody.Instructions.Last(), proc.Create(OpCodes.Ldtoken, property.DeclaringType));
-            proc.InsertBefore(staticCtorBody.Instructions.Last(), proc.Create(OpCodes.Call, getTypeFromHandle));
-            proc.InsertBefore(staticCtorBody.Instructions.Last(), proc.Create(OpCodes.Call, register));
-            proc.InsertBefore(staticCtorBody.Instructions.Last(), proc.Create(OpCodes.Stsfld, field));
+            proc.InsertBefore(ret, proc.Create(OpCodes.Ldstr, property.Name));
+            proc.InsertBefore(ret, proc.Create(OpCodes.Ldtoken, propertyType));
+            proc.InsertBefore(ret, proc.Create(OpCodes.Call, getTypeFromHandle));
+            proc.InsertBefore(ret, proc.Create(OpCodes.Ldtoken, property.DeclaringType));
+            proc.InsertBefore(ret, proc.Create(OpCodes.Call, getTypeFromHandle));
+            proc.InsertBefore(ret, proc.Create(OpCodes.Call, register));
+            proc.InsertBefore(ret, proc.Create(OpCodes.Stsfld, field));
         }
 
-        private static void WeaveGetter(PropertyDefinition property)
+        private void WeaveGetter(PropertyDefinition property)
         {
             var body = property.GetMethod.Body;
             var proc = body.GetILProcessor();
             var field = property.DeclaringType.Fields.Single(f => f.Name == property.Name + "DependencyProperty");
-            var getValue = property.DeclaringType.Module.Assembly.ImportMethod(typeof(DependencyObject).GetMethod("GetValue"));
-
-            var ldLoc0 = proc.Create(OpCodes.Ldloc_0);
-            var brs = proc.Create(OpCodes.Br_S, ldLoc0);
+            var getValue = Definition.ImportMethod(typeof(DependencyObject).GetMethod("GetValue"));
 
             body.Instructions.Clear();
 
-            proc.Emit(OpCodes.Nop);
             proc.Emit(OpCodes.Ldarg_0);
             proc.Emit(OpCodes.Ldsfld, field);
             proc.Emit(OpCodes.Call, getValue);
             proc.Emit(property.PropertyType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, property.PropertyType);
-            proc.Emit(OpCodes.Stloc_0);
-            proc.Append(brs);
-            proc.Append(ldLoc0);
             proc.Emit(OpCodes.Ret);
         }
 
-        private static void WeaveSetter(PropertyDefinition property)
+        private void WeaveSetter(PropertyDefinition property)
         {
             var body = property.SetMethod.Body;
             var proc = body.GetILProcessor();
             var field = property.DeclaringType.Fields.Single(f => f.Name == property.Name + "DependencyProperty");
-            var setValue = property.DeclaringType.Module.Assembly.ImportMethod(typeof(DependencyObject).GetMethod("SetValue", new[] { typeof(DependencyProperty), typeof(object) }));
+            var setValue = Definition.ImportMethod(typeof(DependencyObject).GetMethod("SetValue", new[] { typeof(DependencyProperty), typeof(object) }));
 
             body.Instructions.Clear();
 
-            proc.Emit(OpCodes.Nop);
             proc.Emit(OpCodes.Ldarg_0);
             proc.Emit(OpCodes.Ldsfld, field);
             proc.Emit(OpCodes.Ldarg_1);
@@ -114,7 +152,6 @@ namespace AOP.WeaverTask
                 proc.Emit(OpCodes.Box, property.PropertyType);
             }
             proc.Emit(OpCodes.Call, setValue);
-            proc.Emit(OpCodes.Nop);
             proc.Emit(OpCodes.Ret);
         }
 

@@ -12,6 +12,9 @@ namespace AOP.Wpf
         public StockTickerPoco StockTickerPoco { get; private set; }
         public StockTickerVerbose StockTickerVerbose { get; private set; }
 
+        public string Text { get; set; }
+        public decimal Price { get; set; }
+
         public MainWindow()
         {
             InitializeComponent();

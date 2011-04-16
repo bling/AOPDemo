@@ -51,7 +51,9 @@
   <Target Name="BeforeBuild">
   </Target>
   -->
+  <UsingTask AssemblyFile="$(SolutionDir)\lib\AOP.WeaverTask.dll"
+             TaskName="AOP.WeaverTask.WeaverTask" />
   <Target Name="AfterBuild">
-    <Exec Command='C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe "$(SolutionDir)\src\AOP.WeaverTask\weave.proj" /p:SolutionDir=$(SolutionDir) /p:OutputPath=$(OutputPath) /p:Configuration=$(Configuration)' />
+    <WeaverTask OutputPath="$(OutputPath)" />
   </Target>
 </Project>

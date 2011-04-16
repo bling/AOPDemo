@@ -1,14 +1,21 @@
 ﻿using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
 namespace AOP.WeaverTask
 {
-    public class NotifyPropertyChangedWeaver : WeaverTask
+    public class NotifyPropertyChangedWeaver : AssemblyWeaverBase
     {
-        public override bool Scan(AssemblyDefinition def)
+        public NotifyPropertyChangedWeaver(Assembly assembly, AssemblyDefinition definition)
+            : base(assembly, definition)
         {
+        }
+
+        public override void Weave()
+        {
+            var def = Definition;
             var propertyChangedEventArgsCtor = def.ImportPropertyChangedEventArgsCtor();
             var propertyChangedEventHandler = def.ImportType<PropertyChangedEventHandler>();
             var propertyChangedEventHandlerInvoke = def.ImportPropertyChangedEventHandlerInvoke();
@@ -22,8 +29,6 @@ namespace AOP.WeaverTask
                              where p.SetMethod != null
                              select p;
 
-            bool changed = false;
-
             foreach (var method in setMethods)
             {
                 var body = method.SetMethod.Body;
@@ -33,7 +38,6 @@ namespace AOP.WeaverTask
                 if (backingFieldRef == null || body.Instructions.Count > 4)
                     continue; // only support auto props
 
-                changed = true;
                 body.Variables.Add(new VariableDefinition(propertyChangedEventHandler));
                 body.Variables.Add(new VariableDefinition(boolType));
                 body.InitLocals = true;
@@ -94,8 +98,6 @@ namespace AOP.WeaverTask
                 proc.Append(nop);
                 proc.Append(ret);
             }
-
-            return changed;
         }
     }
 }

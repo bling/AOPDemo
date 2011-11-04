@@ -5,6 +5,7 @@ namespace AOP.Test
 {
     public interface ILocker
     {
+        event Action<Thread, Thread> PotentialDeadlock;
         IDisposable Enter();
     }
 
@@ -20,8 +21,8 @@ namespace AOP.Test
 
         public DeadLockDetector()
         {
-            TryTimeout = 500;
-            DeadLockThreshold = 5000;
+            TryTimeout = 50;
+            DeadLockThreshold = 500;
         }
 
         public IDisposable Enter()

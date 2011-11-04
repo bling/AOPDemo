@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="CrossCutting.cs" />
     <Compile Include="DeadLockDetector.cs" />
+    <Compile Include="DeadlockTest.cs" />
     <Compile Include="NoOpAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PerformanceTests.cs" />

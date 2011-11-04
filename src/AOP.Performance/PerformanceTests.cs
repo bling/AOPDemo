@@ -18,7 +18,7 @@ namespace AOP.Test
         {
             // preload to prevent skewed results from being run first
             new Model();
-            new COB();
+            new CBO();
         }
 
         [Test]
@@ -27,7 +27,8 @@ namespace AOP.Test
             var time = Run("new", TimeSpan.Zero, () => new Model());
             Run("activator", time, () => Activator.CreateInstance<Model>());
             Run("castle", time, () => _proxyGenerator.CreateClassProxy<Model>());
-            Run("cob", time, () => new COB());
+            Run("castle.interface", time, () => _proxyGenerator.CreateInterfaceProxyWithTarget<IHello>(new Model()));
+            Run("cob", time, () => new CBO());
         }
 
         [Test]
@@ -36,7 +37,8 @@ namespace AOP.Test
             var time = Run("new", TimeSpan.Zero, new Model());
             Run("activator", time, Activator.CreateInstance<Model>());
             Run("dynamicproxy", time, _proxyGenerator.CreateClassProxy<Model>());
-            Run("cob", time, new COB());
+            Run("dynamicproxy.interface", time, _proxyGenerator.CreateInterfaceProxyWithTarget<IHello>(new Model()));
+            Run("cob", time, new CBO());
         }
 
         private static TimeSpan Run(string name, TimeSpan baseTime, IHello hello)
@@ -82,9 +84,9 @@ namespace AOP.Test
     }
 
     [NoOp]
-    public class COB : ContextBoundObject, IHello
+    public class CBO : ContextBoundObject, IHello
     {
-        public COB()
+        public CBO()
         {
 #if !NOOP
             var s = Environment.MachineName;
